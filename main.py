@@ -6,7 +6,7 @@ from files import *
 
 
 """ Pardonnez-moi le bordel ^^ """
-version = '0.1'
+version = '1.0'
 
 jingles_txt = {'nuggets': "On passe aux NUGGETS ! ",
                'seloupoivre': "C'est le moment du SEL OU POIVRE !",
@@ -125,44 +125,21 @@ def load_sound(file):
         return False
 
 
-def font_dict(font):
-    """ Create font dictionnary """
-    f_dict = {}
-    try:
-        for s in range(2, 502, 2):
-            f_dict[s] = pygame.font.Font(font, s)
-        log.append(time.localtime(), 'system', "[REUSSITE] Fichier chargé : %s" % font)
-        return f_dict
-    except Exception as e:
-        log.append(time.localtime(), 'system', '[ECHEC] Impossible de charger %s\n%s' % (font, e))
-        return font_dict(None)
+class PQFont:
+    def __init__(self, font_file):
+        self.f_file = font_file
+        self._f_dict = {}
 
+    def render(self, text, size, n_color):
+        if size not in self._f_dict.keys():
+            self._f_dict[size] = pygame.font.Font(self.f_file, size)
 
-def multi_color_render(size, font=font_dict(None), antialias=1, **kwargs):
-    """ Return a pygame.Surface if the multi color phrase"""
-    line = []
-    width = 0
-    height = 0
-    for name, phrase in kwargs.items():
-        print(phrase)
-        for n_phrase, n_color in phrase.items():
-            txt = font[size].render(n_phrase, antialias, n_color)
-            width += txt.get_rect().width
-            height = txt.get_rect().height
-            line.append(txt)
-
-    current_width = 0
-    surface = pygame.Surface((width, height))
-    for render_phrase in line:
-        surface.blit(render_phrase, (current_width, 0))
-        current_width += render_phrase.get_rect().width
-
-    return surface
+        return self._f_dict[size].render(text, 1, n_color)
 
 
 """ Initialisation des polices """
-dimbo = font_dict(DIMBO_FILE)
-horseshoelemonade = font_dict(HSLMD_FILE)
+dimbo = PQFont(DIMBO_FILE)
+horseshoelemonade = PQFont(HSLMD_FILE)
 
 """ Init fin """
 
@@ -235,12 +212,12 @@ class MainMenu:
             start_y = 650
             y_offset = 90
 
-        version_txt = dimbo[v_size].render("Version %s" % version, 1, WHITE)
+        version_txt = dimbo.render("Version %s" % version, v_size, WHITE)
         self.screen.blit(version_txt, (self.stg.resolution[0] / 2 - version_txt.get_rect().width / 2, 5))
 
-        commencer_txt = dimbo[txt_size].render("Commencer", 1, WHITE)
-        param_txt = dimbo[txt_size].render("Paramètres", 1, WHITE)
-        quitter_txt = dimbo[txt_size].render("Quitter", 1, WHITE)
+        commencer_txt = dimbo.render("Commencer", txt_size, WHITE)
+        param_txt = dimbo.render("Paramètres", txt_size, WHITE)
+        quitter_txt = dimbo.render("Quitter", txt_size, WHITE)
 
         center = self.stg.resolution[0] / 2
 
@@ -327,9 +304,9 @@ class SettingsMenu:
             y_offset = 75
             bottom = 180
 
-        txt_res = dimbo[txt_size].render("Resolution", 1, WHITE)
-        medium_res = dimbo[txt_size].render("1280 x 720", 1, medium_color)
-        high_res = dimbo[txt_size].render("1920 x 1080", 1, high_color)
+        txt_res = dimbo.render("Resolution", txt_size, WHITE)
+        medium_res = dimbo.render("1280 x 720", txt_size, medium_color)
+        high_res = dimbo.render("1920 x 1080", txt_size, high_color)
 
         self.screen.blit(txt_res, (x_center - txt_res.get_rect().width / 2, y_start))
 
@@ -348,7 +325,7 @@ class SettingsMenu:
         self.buttons["720"] = pygame.rect.Rect(medium_rect)
         self.buttons["1080"] = pygame.rect.Rect(high_rect)
 
-        son_txt = dimbo[txt_size].render("Son", 1, WHITE)
+        son_txt = dimbo.render("Son", txt_size, WHITE)
         self.screen.blit(son_txt, (x_center - son_txt.get_rect().width / 2, y_start + y_offset * 4))
         if self.selected_sound:
             on_color = MAYO
@@ -357,8 +334,8 @@ class SettingsMenu:
             on_color = nGREY[40]
             off_color = KETCHUP
 
-        on_txt = dimbo[txt_size].render("ON", 1, on_color)
-        off_txt = dimbo[txt_size].render("OFF", 1, off_color)
+        on_txt = dimbo.render("ON", txt_size, on_color)
+        off_txt = dimbo.render("OFF", txt_size, off_color)
 
         on_rect = (x_center - on_txt.get_rect().width - 5,
                    y_start + y_offset * 5,
@@ -375,8 +352,8 @@ class SettingsMenu:
         self.screen.blit(on_txt, (on_rect[0], on_rect[1]))
         self.screen.blit(off_txt, (off_rect[0], off_rect[1]))
 
-        appliquer_txt = dimbo[txt_size].render("Appliquer", 1, MAYO)
-        annuler_txt = dimbo[txt_size].render("Annuler", 1, KETCHUP)
+        appliquer_txt = dimbo.render("Appliquer", txt_size, MAYO)
+        annuler_txt = dimbo.render("Annuler", txt_size, KETCHUP)
 
         app_rect = (x_center - appliquer_txt.get_rect().width - 20,
                     self.stg.resolution[1] - bottom,
@@ -550,14 +527,14 @@ class Score:
             text_size = 80
             text_size_small = 60
 
-        jingle_txt = dimbo[text_size_small].render("Lancer un jingle", 1, WHITE)
+        jingle_txt = dimbo.render("Lancer un jingle", text_size_small, WHITE)
         self.jingles_screen.blit(jingle_txt, (center_x - jingle_txt.get_rect().width / 2, start_y))
 
         """ NUGGETS """
         nuggets_color = BQ_BLUE
         if self.nuggets_flag:
             nuggets_color = WASABI
-        nuggets_txt = horseshoelemonade[text_size].render("Nuggets", 1, nuggets_color)
+        nuggets_txt = horseshoelemonade.render("Nuggets", text_size, nuggets_color)
         nuggets_rect = (center_x - nuggets_txt.get_rect().width / 2, start_y + offset_y,
                         nuggets_txt.get_rect().width, nuggets_txt.get_rect().height)
         self.jingles_screen.blit(nuggets_txt, (nuggets_rect[0], nuggets_rect[1]))
@@ -566,7 +543,7 @@ class Score:
         seloupoivre_color = BQ_BLUE
         if self.seloupoivre_flag:
             seloupoivre_color = WASABI
-        seloupoivre_txt = horseshoelemonade[text_size].render("Sel ou Poivre", 1, seloupoivre_color)
+        seloupoivre_txt = horseshoelemonade.render("Sel ou Poivre", text_size, seloupoivre_color)
         seloupoivre_rect = (center_x - seloupoivre_txt.get_rect().width / 2, start_y + offset_y * 2,
                             seloupoivre_txt.get_rect().width, seloupoivre_txt.get_rect().height)
         self.jingles_screen.blit(seloupoivre_txt, (seloupoivre_rect[0], seloupoivre_rect[1]))
@@ -575,7 +552,7 @@ class Score:
         menus_color = BQ_BLUE
         if self.menus_flag:
             menus_color = WASABI
-        menus_txt = horseshoelemonade[text_size].render("Menus", 1, menus_color)
+        menus_txt = horseshoelemonade.render("Menus", text_size, menus_color)
         menus_rect = (center_x - menus_txt.get_rect().width / 2, start_y + offset_y * 3,
                       menus_txt.get_rect().width, menus_txt.get_rect().height)
         self.jingles_screen.blit(menus_txt, (menus_rect[0], menus_rect[1]))
@@ -584,7 +561,7 @@ class Score:
         addition_color = BQ_BLUE
         if self.addition_flag:
             addition_color = WASABI
-        addition_txt = horseshoelemonade[text_size].render("L'addition", 1, addition_color)
+        addition_txt = horseshoelemonade.render("L'addition", text_size, addition_color)
         addition_rect = (center_x - addition_txt.get_rect().width / 2, start_y + offset_y * 4,
                          addition_txt.get_rect().width, addition_txt.get_rect().height)
         self.jingles_screen.blit(addition_txt, (addition_rect[0], addition_rect[1]))
@@ -593,13 +570,13 @@ class Score:
         burger_color = BQ_BLUE
         if self.burger_flag:
             burger_color = WASABI
-        burger_txt = horseshoelemonade[text_size].render("Le Burger de la mort", 1, burger_color)
+        burger_txt = horseshoelemonade.render("Le Burger de la mort", text_size, burger_color)
         burger_rect = (center_x - burger_txt.get_rect().width / 2, start_y + offset_y * 5,
                        burger_txt.get_rect().width, burger_txt.get_rect().height)
         self.jingles_screen.blit(burger_txt, (burger_rect[0], burger_rect[1]))
 
         """ ANNULER """
-        annuler_txt = dimbo[text_size_small].render("Annuler", 1, WHITE)
+        annuler_txt = dimbo.render("Annuler", text_size_small, WHITE)
         annuler_rect = (center_x - annuler_txt.get_rect().width / 2, start_y + offset_y * 7,
                         annuler_txt.get_rect().width, annuler_txt.get_rect().height)
         self.jingles_screen.blit(annuler_txt, (annuler_rect[0], annuler_rect[1]))
@@ -635,8 +612,8 @@ class Score:
         center_x = self.stg.resolution[0] / 2
         center_y = self.stg.resolution[1] / 2
 
-        txt_s_k = horseshoelemonade[size].render(txt_k, 1, KETCHUP)
-        txt_s_m = horseshoelemonade[size].render(txt_m, 1, MAYO)
+        txt_s_k = horseshoelemonade.render(txt_k, size, KETCHUP)
+        txt_s_m = horseshoelemonade.render(txt_m, size, MAYO)
 
         rect_s_k = txt_s_k.get_rect()
         rect_s_m = txt_s_m.get_rect()
@@ -660,7 +637,7 @@ class Score:
             bottom = 80
             txt_size = 40
 
-        retour_txt = dimbo[txt_size].render("Retour", 1, WHITE)
+        retour_txt = dimbo.render("Retour", txt_size, WHITE)
         retour_button = (self.stg.resolution[0] - retour_txt.get_rect().width - bottom,
                          self.stg.resolution[1] - retour_txt.get_rect().height - bottom,
                          retour_txt.get_rect().width,
@@ -668,7 +645,7 @@ class Score:
         self.screen.blit(retour_txt, (retour_button[0], retour_button[1]))
         self.buttons['retour'] = pygame.rect.Rect(retour_button)
 
-        jingle_txt = dimbo[txt_size].render("Jingles", 1, WHITE)
+        jingle_txt = dimbo.render("Jingles", txt_size, WHITE)
         jingle_rect = (self.stg.resolution[0] - jingle_txt.get_rect().width - bottom - 100,
                        self.stg.resolution[1] - jingle_txt.get_rect().height - bottom,
                        jingle_txt.get_rect().width,
@@ -816,4 +793,4 @@ while continuer:
     pq.display()
     pygame.display.flip()
 
-log.print()
+pygame.quit()
